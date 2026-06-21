@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - resQpaws</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+  <main class="auth-wrapper">
+    <!-- Left Sidebar (Hidden on Mobile) -->
+    <div class="auth-sidebar">
+      <a href="index.html" class="auth-sidebar-brand">
+        <span>resQ<span style="color:#22C55E;">paws</span></span>
+      </a>
+      
+      <div class="auth-sidebar-quote">
+        <h2>Join Our Growing Rescue Network</h2>
+        <p>Whether you are a citizen concerned about strays or a professional NGO agency seeking rescue tracking software, register today to start making a difference.</p>
+      </div>
+      
+      <div style="font-size:0.85rem; opacity:0.8;">
+        © 2026 resQpaws Welfare Organization.
+      </div>
+    </div>
+
+    <!-- Right Side: Registration Panel -->
+    <div class="auth-panel">
+      <div class="auth-card" style="margin-top: 40px; margin-bottom: 40px;">
+        <h2>Create Account</h2>
+        <p>Register as a Public Reporter or onboarding your NGO agency.</p>
+        
+        <!-- Registration Form -->
+        <form id="register-form">
+          <div class="form-group">
+            <label class="form-label">Account Role</label>
+            <select id="reg-role" class="form-control" required>
+              <option value="user">Public User (Reporter)</option>
+              <option value="ngo">NGO / Rescuer (Admin)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" id="label-name">Full Name</label>
+            <input type="text" id="reg-name" class="form-control" placeholder="Jane Doe" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="reg-email" class="form-control" placeholder="name@domain.com" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="reg-password" class="form-control" placeholder="Min. 6 characters" required minlength="6">
+          </div>
+
+          <!-- NGO Specific Fields (Hidden by default, shown when 'ngo' is selected) -->
+          <div id="ngo-fields" style="display: none; border-top: 1px dashed var(--input-border); padding-top: 16px; margin-top: 16px;">
+            <h4 style="margin-bottom: 12px; color: var(--primary);">Agency Details</h4>
+            
+            <div class="form-group">
+              <label class="form-label">Helpline Contact Number</label>
+              <input type="text" id="reg-ngo-phone" class="form-control" placeholder="+91 XXXXX XXXXX">
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label">Operating City</label>
+              <input type="text" id="reg-ngo-city" class="form-control" placeholder="Bangalore">
+            </div>
+          </div>
+          
+          <button type="submit" id="reg-submit-btn" class="btn btn-primary" style="width:100%; margin-top:12px;">Create Account</button>
+        </form>
+        
+        <p style="text-align:center; font-size:0.9rem; color:var(--text-muted); margin-top:32px;">
+          Already have an account? <a href="login.html" style="font-weight:700;">Login Here</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  
+  <script src="data/sample-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/main.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const roleSelect = document.getElementById("reg-role");
+      const ngoFields = document.getElementById("ngo-fields");
+      const nameLabel = document.getElementById("label-name");
+      const registerForm = document.getElementById("register-form");
+
+      // Toggle NGO fields visibility
+      roleSelect.addEventListener("change", (e) => {
+        if (e.target.value === "ngo") {
+          ngoFields.style.display = "block";
+          nameLabel.textContent = "NGO / Agency Name";
+          document.getElementById("reg-ngo-phone").required = true;
+          document.getElementById("reg-ngo-city").required = true;
+        } else {
+          ngoFields.style.display = "none";
+          nameLabel.textContent = "Full Name";
+          document.getElementById("reg-ngo-phone").required = false;
+          document.getElementById("reg-ngo-city").required = false;
+        }
+      });
+
+      // Submit listener
+      if (registerForm) {
+        registerForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          
+          const role = roleSelect.value;
+          const name = document.getElementById("reg-name").value.trim();
+          const email = document.getElementById("reg-email").value.trim();
+          const password = document.getElementById("reg-password").value;
+          const submitBtn = document.getElementById("reg-submit-btn");
+
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Creating profile...";
+
+          let additionalDetails = {};
+          if (role === "ngo") {
+            additionalDetails.phone = document.getElementById("reg-ngo-phone").value.trim();
+            additionalDetails.city = document.getElementById("reg-ngo-city").value.trim();
+            // Assign dummy lat/lng around Bangalore center
+            additionalDetails.location = {
+              lat: 12.9716 + (Math.random() - 0.5) * 0.1,
+              lng: 77.5946 + (Math.random() - 0.5) * 0.1
+            };
+          }
+
+          try {
+            await window.GPAuth.register(email, password, name, role, additionalDetails);
+            alert("Account registered successfully! Redirecting to dashboard.");
+            if (role === "ngo") {
+              window.location.href = "ngo-dashboard.html";
+            } else {
+              window.location.href = "user-dashboard.html";
+            }
+          } catch (err) {
+            alert(err.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Create Account";
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

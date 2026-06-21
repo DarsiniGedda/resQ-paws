@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - resQpaws</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+
+  <main class="auth-wrapper">
+    <!-- Left Sidebar (Hidden on Mobile) -->
+    <div class="auth-sidebar">
+      <a href="index.html" class="auth-sidebar-brand">
+        <span>resQ<span style="color:#22C55E;">paws</span></span>
+      </a>
+      
+      <div class="auth-sidebar-quote">
+        <h2>Saving Lives, One Pulse at a Time</h2>
+        <p>Log in to access your coordination panel, track active rescues, or report animal emergencies in your neighborhood.</p>
+      </div>
+      
+      <div style="font-size:0.85rem; opacity:0.8;">
+        © 2026 resQpaws Welfare Organization.
+      </div>
+    </div>
+
+    <!-- Right Side: Login Panel -->
+    <div class="auth-panel">
+      <div class="auth-card">
+        <h2>Welcome Back</h2>
+        <p>Log in to your resQpaws account to coordinate or report rescues.</p>
+        
+        <!-- Login Form -->
+        <form id="login-form">
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" id="login-email" class="form-control" placeholder="name@domain.com" required>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="login-password" class="form-control" placeholder="Enter password" required>
+          </div>
+          
+          <button type="submit" id="login-submit-btn" class="btn btn-primary" style="width:100%; margin-top:12px;">Login</button>
+        </form>
+
+        <div style="margin: 24px 0; text-align: center; color: var(--text-muted); font-size: 0.85rem; position: relative;">
+          <span style="background-color: var(--bg-card); padding: 0 10px; z-index: 1; position: relative;">or sign in with</span>
+          <hr style="position: absolute; top: 50%; left: 0; right: 0; border-color: var(--border-glass); margin: 0; z-index: 0;">
+        </div>
+
+        <button id="google-login-btn" class="btn btn-outline" style="width:100%; display:flex; justify-content:center; align-items:center; gap:8px;">
+          <svg width="18" height="18" viewBox="0 0 18 18">
+            <path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.47h4.84a4.14 4.14 0 0 1-1.8 2.71v2.26h2.91c1.7-1.56 2.69-3.86 2.69-6.6z"/>
+            <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.2l-2.91-2.26c-.8.54-1.83.86-3.05.86-2.34 0-4.33-1.58-5.04-3.7H.95v2.33C2.43 15.89 5.5 18 9 18z"/>
+            <path fill="#FBBC05" d="M3.96 10.7a5.4 5.4 0 0 1 0-3.4V4.97H.95a9 9 0 0 0 0 8.06l3.01-2.33z"/>
+            <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.1C13.46.66 11.42 0 9 0 5.5 0 2.43 2.11.95 5.08L3.96 7.4c.71-2.12 2.7-3.7 5.04-3.7z"/>
+          </svg>
+          Google Account
+        </button>
+        
+        <p style="text-align:center; font-size:0.9rem; color:var(--text-muted); margin-top:32px;">
+          Don't have an account? <a href="register.html" style="font-weight:700;">Register Here</a>
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  
+  <script src="data/sample-data.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/main.js"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const form = document.getElementById("login-form");
+      const googleBtn = document.getElementById("google-login-btn");
+
+      // 🔐 EMAIL LOGIN
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById("login-email").value.trim();
+        const password = document.getElementById("login-password").value;
+        const btn = document.getElementById("login-submit-btn");
+
+        btn.disabled = true;
+        btn.textContent = "Logging in...";
+
+        try {
+          const user = await window.GPAuth.login(email, password);
+
+          // Give a short delay to sync and then redirect
+          setTimeout(() => {
+            if (user.role === "ngo") {
+              window.location.href = "ngo-dashboard.html";
+            } else {
+              window.location.href = "user-dashboard.html";
+            }
+          }, 600);
+
+        } catch (err) {
+          alert("Login error: " + err.message);
+          btn.disabled = false;
+          btn.textContent = "Login";
+        }
+      });
+
+      // 🌐 GOOGLE LOGIN
+      googleBtn.addEventListener("click", async () => {
+        googleBtn.disabled = true;
+        try {
+          const user = await window.GPAuth.loginWithGoogle();
+          
+          setTimeout(() => {
+            if (user.role === "ngo") {
+              window.location.href = "ngo-dashboard.html";
+            } else {
+              window.location.href = "user-dashboard.html";
+            }
+          }, 600);
+
+        } catch (err) {
+          alert("Google Sign-In error: " + err.message);
+          googleBtn.disabled = false;
+        }
+      });
+    });
+  </script>
+</body>
+</html>
